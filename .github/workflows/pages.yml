@@ -44,7 +44,8 @@ jobs:
 
       - name: Build site
         run: python scripts/build.py
-        - name: Verify site artifact
+      - name: Verify site artifact
+        
         run: |
           echo "=== site contents ==="
           ls -l site
