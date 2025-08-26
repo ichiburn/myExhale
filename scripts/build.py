@@ -3,7 +3,7 @@ from pathlib import Path
 from jinja2 import Template
 
 ROOT = Path(__file__).resolve().parents[1]
-PRIV = ROOT / "myExhale-private" 
+PRIV = ROOT / "myExhale-private"   # サブモジュール名に合わせる
 SITE = ROOT / "site"
 SITE.mkdir(exist_ok=True)
 
@@ -20,11 +20,13 @@ def parse_file(p: Path):
             first = re.sub(r"^\s*-\s+", "", line).strip()
             items.append((cur, first))
             cur = None  # セクション最初の項目だけ拾う
-    return {"date": date, "items": items}
+    # RSS用 description を事前生成
+    desc = " ".join([f"{c}: {line}" for c, line in items])
+    return {"date": date, "items": items, "desc": desc}
 
 def collect():
     entries = []
-    for p in sorted(PRIV.glob("*.md")):
+    for p in sorted(PRIV.rglob("*.md")):   # サブフォルダにも対応
         entries.append(parse_file(p))
     return entries
 
@@ -48,7 +50,7 @@ HTML = Template("""<!doctype html><meta charset="utf-8">
 <div class="day" id="{{e.date}}">
   <div class="date">{{e.date}}</div>
   <ul>
-  {% for c, line in e.items %}<li><span class="badge">{{c}}</span> {{line}}</li>{% endfor %}
+  {% for c, line in e["items"] %}<li><span class="badge">{{c}}</span> {{line}}</li>{% endfor %}
   </ul>
 </div>
 {%- endfor %}
@@ -60,23 +62,26 @@ RSS = Template("""<?xml version="1.0" encoding="UTF-8"?>
 <title>myExhale</title>
 <link>{{site}}</link>
 <description>日々の証跡（要約のみ）</description>
-{% for c, line in e["items"] %}<li><span class="badge">{{c}}</span> {{line}}</li>{% endfor %}
+{% for e in entries|reverse -%}
 <item>
   <title>{{e.date}}</title>
   <link>{{site}}#{{e.date}}</link>
-  <description><![CDATA[{% for c, line in e["items"] %}{{c}}: {{line}} {% endfor %}]]></description>
+  <description><![CDATA[{{ e["desc"] }}]]></description>
   <pubDate>{{e.date}} 00:00:00 +0900</pubDate>
 </item>
 {%- endfor %}
 </channel></rss>""")
 
 def streak(entries):
-    if not entries: return 0
+    if not entries:
+        return 0
     dates = [datetime.date.fromisoformat(e["date"]) for e in entries]
     s = 1
     for i in range(len(dates)-1, 0, -1):
-        if (dates[i] - dates[i-1]).days == 1: s += 1
-        else: break
+        if (dates[i] - dates[i-1]).days == 1:
+            s += 1
+        else:
+            break
     return s
 
 def main():
@@ -88,8 +93,11 @@ def main():
         encoding="utf-8"
     )
     site_url = "{{PUBLIC_SITE_URL}}"
-    (SITE/"feed.xml").write_text(RSS.render(entries=entries, site=site_url), encoding="utf-8")
-    print("built -> site/")
+    (SITE/"feed.xml").write_text(
+        RSS.render(entries=entries, site=site_url),
+        encoding="utf-8"
+    )
+    print(f"built -> site/ (entries={total})")
 
 if __name__ == "__main__":
     main()
