@@ -1,0 +1,3 @@
+[submodule "myExhale-private"]
+	path = myExhale-private
+	url = https://github.com/ichiburn/myExhale-private.git
