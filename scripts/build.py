@@ -60,11 +60,11 @@ RSS = Template("""<?xml version="1.0" encoding="UTF-8"?>
 <title>myExhale</title>
 <link>{{site}}</link>
 <description>日々の証跡（要約のみ）</description>
-{% for e in entries|reverse -%}
+{% for c, line in e["items"] %}<li><span class="badge">{{c}}</span> {{line}}</li>{% endfor %}
 <item>
   <title>{{e.date}}</title>
   <link>{{site}}#{{e.date}}</link>
-  <description><![CDATA[{% for c, line in e.items %}{{c}}: {{line}} {% endfor %}]]></description>
+  <description><![CDATA[{% for c, line in e["items"] %}{{c}}: {{line}} {% endfor %}]]></description>
   <pubDate>{{e.date}} 00:00:00 +0900</pubDate>
 </item>
 {%- endfor %}
