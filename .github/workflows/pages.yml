@@ -4,11 +4,9 @@ on:
     branches: [ main ]
   workflow_dispatch: {}
 
-# ここで全体 permissions を指定してもOK（任意）
-# permissions:
-#   contents: read
-#   pages: write
-#   id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -46,6 +44,9 @@ jobs:
 
       - name: Build site
         run: python scripts/build.py
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
