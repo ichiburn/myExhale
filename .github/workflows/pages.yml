@@ -44,6 +44,11 @@ jobs:
 
       - name: Build site
         run: python scripts/build.py
+        - name: Verify site artifact
+        run: |
+          echo "=== site contents ==="
+          ls -l site
+          test -f site/index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

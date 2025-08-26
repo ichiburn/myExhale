@@ -3,7 +3,7 @@ from pathlib import Path
 from jinja2 import Template
 
 ROOT = Path(__file__).resolve().parents[1]
-PRIV = ROOT / "proof-private"
+PRIV = ROOT / "myExhale-private" 
 SITE = ROOT / "site"
 SITE.mkdir(exist_ok=True)
 
