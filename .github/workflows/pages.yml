@@ -1,8 +1,13 @@
 name: Build & Publish
+
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch: {}
+    branches: [ main ]              # 本番デプロイ
+  schedule:
+    - cron: '0 14 * * *'            # 任意: 毎日 23:00 JST (=14:00 UTC)
+  workflow_dispatch: {}              # 手動実行
+  repository_dispatch:
+    types: [update-from-private]     # private からの通知で起動
 
 concurrency:
   group: "pages"
@@ -34,18 +39,29 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive
 
+      # 作業ツリーだけ最新化（pushしない＝自己キャンセル回避）
+      - name: Update submodule to latest remote (no commit/push)
+        run: |
+          set -e
+          git -C myExhale-private fetch --tags --force
+          DEFAULT_BRANCH=$(git -C myExhale-private symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || echo main)
+          git -C myExhale-private checkout --detach origin/${DEFAULT_BRANCH}
+          git -C myExhale-private log -1 --pretty=oneline || true
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install deps
-        run: pip install jinja2
+        run: |
+          python -m pip install --upgrade pip
+          pip install jinja2
 
       - name: Build site
         run: python scripts/build.py
+
       - name: Verify site artifact
-        
         run: |
           echo "=== site contents ==="
           ls -l site
